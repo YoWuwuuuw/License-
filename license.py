@@ -3,19 +3,14 @@ import fnmatch
 
 
 def check_and_add_license_header(filepath, ignore_patterns):
-    """
-    Checks if a file has the specified license header and adds it if it's missing.
-    Applies ignore patterns to skip specified files and directories.
-    """
-
-    # Check if the file should be ignored
     for pattern in ignore_patterns:
         if fnmatch.fnmatch(filepath, pattern):
             print(f"Skipping {filepath} due to ignore pattern: {pattern}")
             return
 
     if filepath.endswith(".md"):
-        license_header = """<!--
+        license_header = """
+<!--
     Licensed to the Apache Software Foundation (ASF) under one or more
     contributor license agreements.  See the NOTICE file distributed with
     this work for additional information regarding copyright ownership.
@@ -30,10 +25,13 @@ def check_and_add_license_header(filepath, ignore_patterns):
     WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
     See the License for the specific language governing permissions and
     limitations under the License.
--->"""
+-->
+"""
         header_check_string = "Licensed to the Apache Software Foundation (ASF) under one or more"
+
     elif filepath.endswith((".yml", ".yaml")):
-        license_header = """#
+        license_header = """
+#
 # Licensed to the Apache Software Foundation (ASF) under one
 # or more contributor license agreements.  See the NOTICE file
 # distributed with this work for additional information
@@ -49,10 +47,13 @@ def check_and_add_license_header(filepath, ignore_patterns):
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#"""
+#
+"""
+
         header_check_string = "Licensed to the Apache Software Foundation (ASF) under one"
-        # Define the old header format to replace
-        old_license_header_format1 = """#
+
+        old_license_header_format1 = """
+#
 # Licensed to the Apache Software Foundation (ASF) under one or more
 # contributor license agreements.  See the NOTICE file distributed with
 # this work for additional information regarding copyright ownership.
@@ -67,8 +68,10 @@ def check_and_add_license_header(filepath, ignore_patterns):
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#"""
-        old_license_header_format2 = """#
+#
+"""
+        old_license_header_format2 = """
+#
 # Licensed to the Apache Software Foundation (ASF) under one or more
 # contributor license agreements.  See the NOTICE file distributed with
 # this work for additional information regarding copyright ownership.
@@ -88,7 +91,8 @@ def check_and_add_license_header(filepath, ignore_patterns):
 """
 
     elif filepath.endswith(".ftl"):
-        license_header = """<#--
+        license_header = """
+<#--
     Licensed to the Apache Software Foundation (ASF) under one or more
     contributor license agreements.  See the NOTICE file distributed with
     this work for additional information regarding copyright ownership.
@@ -107,7 +111,8 @@ def check_and_add_license_header(filepath, ignore_patterns):
         header_check_string = "Licensed to the Apache Software Foundation (ASF) under one or more"
 
     elif filepath.endswith(".java"):
-        license_header = """/*
+        license_header = """
+/*
  * Licensed to the Apache Software Foundation (ASF) under one or more
  * contributor license agreements.  See the NOTICE file distributed with
  * this work for additional information regarding copyright ownership.
@@ -122,10 +127,12 @@ def check_and_add_license_header(filepath, ignore_patterns):
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- */"""
+ */
+ """
+
         header_check_string = "Licensed to the Apache Software Foundation (ASF) under one or more"
     else:
-        return  # Skip files with other extensions
+        return
 
     try:
         with open(filepath, 'r+') as f:
@@ -136,7 +143,7 @@ def check_and_add_license_header(filepath, ignore_patterns):
                     content = content.replace(old_license_header_format1, license_header)
                     f.seek(0, 0)
                     f.write(content)
-                    f.truncate()  # Remove any remaining characters after the new content
+                    f.truncate()
                     print(f"Replaced old license header format 1 in {filepath}")
                 elif old_license_header_format2 in content:
                     content = content.replace(old_license_header_format2, license_header)
@@ -145,21 +152,21 @@ def check_and_add_license_header(filepath, ignore_patterns):
                     f.truncate()
                     print(f"Replaced old license header format 2 in {filepath}")
                 elif header_check_string not in content:
-                    f.seek(0, 0)  # Go to the beginning of the file
+                    f.seek(0, 0)
                     f.write(license_header.rstrip('\n') + '\n\n' + content)
                     print(f"License header added to {filepath}")
                 else:
                     print(f"License header already exists in {filepath}")
             elif filepath.endswith(".ftl"):
                 if header_check_string not in content:
-                    f.seek(0, 0)  # Go to the beginning of the file
+                    f.seek(0, 0)
                     f.write(license_header.rstrip('\n') + '\n\n' + content)
                     print(f"License header added to {filepath}")
                 else:
                     print(f"License header already exists in {filepath}")
             else:
                 if header_check_string not in content:
-                    f.seek(0, 0)  # Go to the beginning of the file
+                    f.seek(0, 0)
                     f.write(license_header.rstrip('\n') + '\n\n' + content)
                     print(f"License header added to {filepath}")
                 else:
@@ -171,30 +178,22 @@ def check_and_add_license_header(filepath, ignore_patterns):
 
 
 def process_directory(directory, ignore_patterns):
-    """
-    Walks through a directory and applies the license header check, skipping ignored paths.
-    """
     for root, _, files in os.walk(directory):
         for ignore_pattern in ignore_patterns:
-            # Create absolute path for comparison
             abs_ignore_path = os.path.normpath(os.path.join(directory, ignore_pattern))
             abs_root_path = os.path.normpath(os.path.join(directory, root))
 
-            # Check if the current root path matches the ignore pattern
             if fnmatch.fnmatch(abs_root_path + os.sep, abs_ignore_path):
                 print(f"Skipping directory {root} due to ignore pattern: {ignore_pattern}")
-                break  # Skip this directory and its contents
+                break
 
-        else:  # This 'else' is associated with the 'for' loop
+        else:
             for file in files:
                 filepath = os.path.join(root, file)
                 check_and_add_license_header(filepath, ignore_patterns)
 
 
 def normalize_ignore_patterns(ignore_patterns):
-    """
-    Normalizes ignore patterns to be absolute paths relative to the target directory.
-    """
     normalized_patterns = []
     for pattern in ignore_patterns:
         normalized_patterns.append(pattern)
@@ -202,7 +201,7 @@ def normalize_ignore_patterns(ignore_patterns):
 
 
 if __name__ == "__main__":
-    target_directory = "C:/Users\wgl\IdeaProjects\incubator-seata-samples"  # Current directory
+    target_directory = "..."
     ignore_patterns = [
         'LICENSE',
         'NOTICE',
